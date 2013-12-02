@@ -120,6 +120,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Testing'
         ],
+    install_requires=['lockfile==0.9.1',],
     **addl_args
     )
 

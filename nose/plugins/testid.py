@@ -98,6 +98,7 @@ import logging
 import os
 from nose.plugins import Plugin
 from nose.util import src, set
+from lockfile import FileLock
 
 try:
     from cPickle import dump, load
@@ -163,11 +164,15 @@ class TestId(Plugin):
             ids = dict(list(zip(list(self.tests.values()), list(self.tests.keys()))))
         else:
             ids = self.ids
-        fh = open(self.idfile, 'wb')
-        dump({'ids': ids,
-              'failed': self.failed,
-              'source_names': self.source_names}, fh)
-        fh.close()
+        
+        lock = FileLock(self.idfile)
+        with lock:
+            fh = open(self.idfile, 'wb')
+            dump({'ids': ids,
+                  'failed': self.failed,
+                  'source_names': self.source_names}, fh)
+            fh.close()
+            
         log.debug('Saved test ids: %s, failed %s to %s',
                   ids, self.failed, self.idfile)
 
@@ -177,8 +182,11 @@ class TestId(Plugin):
         """
         log.debug('ltfn %s %s', names, module)
         try:
-            fh = open(self.idfile, 'rb')
-            data = load(fh)
+            lock = FileLock(self.idfile)
+            with lock:
+                fh = open(self.idfile, 'rb')
+                data = load(fh)
+                
             if 'ids' in data:
                 self.ids = data['ids']
                 self.failed = data['failed']
